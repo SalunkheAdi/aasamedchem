@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  SELLER
+}
+
+enum Dimension {
+  WEIGHT
+  VOLUME
+  COUNT
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(SELLER)
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  sku         String      @unique
+  description String?
+  category    String?
+  dimension   Dimension
+  baseUnit    String      // e.g. "g" for weight, "mL" for volume, "items" for count
+  stock       Decimal     @db.Decimal(20, 8) // in baseUnit
+  price       Decimal     @db.Decimal(20, 8) // price per priceUnit
+  priceUnit   String      // e.g. "kg", "g", "L", "mL", "items"
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @db.Decimal(20, 8) // total price in INR
+  notes       String?
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderedQuantity Decimal  @db.Decimal(20, 8) // quantity as entered by the user
+  orderedUnit     String   // unit chosen by the user (e.g. "kg")
+  baseQuantity    Decimal  @db.Decimal(20, 8) // quantity converted to baseUnit (e.g. 2500 g)
+  pricePerUnit    Decimal  @db.Decimal(20, 8) // price per priceUnit at time of order
+  priceUnit       String   // price unit used for rate calculation (e.g. "kg")
+  subtotal        Decimal  @db.Decimal(20, 8) // calculated subtotal in INR
+  createdAt       DateTime @default(now())
+}
