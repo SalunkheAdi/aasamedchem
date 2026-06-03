@@ -20,19 +20,6 @@ import {
   Phone,
 } from "lucide-react";
 
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  description: string | null;
-  category: string;
-  dimension: string;
-  baseUnit: string;
-  stock: string;
-  price: string;
-  priceUnit: string;
-}
-
 // Custom AASAMEDCHEM Logo Icon Component
 function LogoIcon() {
   return (
@@ -61,6 +48,60 @@ function LogoIcon() {
   );
 }
 
+// Custom DNA Helix Component
+function DnaHelix() {
+  const points = [];
+  const N = 26;
+  
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const cx = 50 + t * 500;
+    const cy = 380 - t * 330 - Math.sin(t * Math.PI) * 40;
+    
+    const nx = 0.55;
+    const ny = 0.83;
+    
+    const angle = t * Math.PI * 5;
+    const offset = 35 * Math.sin(angle);
+    
+    points.push({
+      x1: cx + nx * offset,
+      y1: cy + ny * offset,
+      x2: cx - nx * offset,
+      y2: cy - ny * offset,
+      opacity: 0.15 + 0.85 * (Math.cos(angle) + 1) / 2,
+    });
+  }
+
+  const path1 = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x1} ${p.y1}`).join(" ");
+  const path2 = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x2} ${p.y2}`).join(" ");
+
+  return (
+    <svg viewBox="0 0 600 400" fill="none" style={styles.dnaSvg}>
+      {points.map((p, idx) => (
+        <line
+          key={idx}
+          x1={p.x1}
+          y1={p.y1}
+          x2={p.x2}
+          y2={p.y2}
+          stroke="#60a5fa"
+          strokeWidth="1.5"
+          opacity={p.opacity * 0.4}
+        />
+      ))}
+      {points.map((p, idx) => (
+        <g key={`joints-${idx}`}>
+          <circle cx={p.x1} cy={p.y1} r="3" fill="#60a5fa" opacity={p.opacity} />
+          <circle cx={p.x2} cy={p.y2} r="3" fill="#3b82f6" opacity={p.opacity} />
+        </g>
+      ))}
+      <path d={path1} stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+      <path d={path2} stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+    </svg>
+  );
+}
+
 export default function HomePage() {
   const router = useRouter();
 
@@ -68,10 +109,8 @@ export default function HomePage() {
   const [session, setSession] = useState<{ username: string; role: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Products State
-  const [products, setProducts] = useState<Product[]>([]);
+  // Categories State
   const [categories, setCategories] = useState<string[]>(["All"]);
-  const [loading, setLoading] = useState(true);
 
   // Filters State
   const [search, setSearch] = useState("");
@@ -90,47 +129,45 @@ export default function HomePage() {
       .finally(() => setCheckingAuth(false));
   }, []);
 
-  // Fetch products
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams();
-      if (search) queryParams.set("search", search);
-      if (category !== "All") queryParams.set("category", category);
-
-      const res = await fetch(`/api/products?${queryParams.toString()}`);
-      if (!res.ok) throw new Error("Failed to load products");
-      const data = await res.json();
-      setProducts(data);
-
-      if (category === "All" && !search) {
-        const unique = ["All", ...new Set(data.map((p: Product) => p.category))] as string[];
-        setCategories(unique);
-      }
-    } catch (error) {
-      console.error("Error fetching products on landing:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, category]);
-
+  // Fetch unique categories on mount
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetch("/api/products")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const unique = ["All", ...new Set(data.map((p: any) => p.category))] as string[];
+          setCategories(unique);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleOrderRedirect = () => {
     if (session) {
       router.push("/dashboard");
     } else {
-      alert("Please Log In or Sign Up to configure quotations and place orders.");
       router.push("/login");
     }
   };
 
-  const handleBrowseScroll = () => {
-    const catalog = document.getElementById("catalog-section");
-    if (catalog) {
-      catalog.scrollIntoView({ behavior: "smooth" });
+  const handleBrowseRedirect = () => {
+    if (session) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+  };
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const queryParams = new URLSearchParams();
+    if (search) queryParams.set("search", search);
+    if (category !== "All") queryParams.set("category", category);
+
+    if (session) {
+      router.push(`/dashboard?${queryParams.toString()}`);
+    } else {
+      router.push(`/login?${queryParams.toString()}`);
     }
   };
 
@@ -150,7 +187,7 @@ export default function HomePage() {
           {/* Navigation links */}
           <nav style={styles.nav}>
             <Link href="/" style={styles.navLinkActive}>Home</Link>
-            <a href="#catalog-section" style={styles.navLink}>Search</a>
+            <a href="#search-section" style={styles.navLink}>Search</a>
             <a href="#how-it-works-section" style={styles.navLink}>About Us</a>
             <a href="#contact-section" style={styles.navLink}>Contact Us</a>
           </nav>
@@ -181,8 +218,8 @@ export default function HomePage() {
       </header>
 
       {/* 2. Search & Filter Bar */}
-      <div style={styles.searchBarWrapper}>
-        <div style={styles.searchBarContainer}>
+      <div id="search-section" style={styles.searchBarWrapper}>
+        <form onSubmit={handleSearchSubmit} style={styles.searchBarContainer}>
           <div style={styles.searchBarBox}>
             <input
               type="text"
@@ -191,7 +228,7 @@ export default function HomePage() {
               onChange={(e) => setSearch(e.target.value)}
               style={styles.searchInput}
             />
-            <button onClick={fetchProducts} style={styles.searchCircleBtn}>
+            <button type="submit" style={styles.searchCircleBtn}>
               <Search size={18} color="#fff" />
             </button>
           </div>
@@ -211,22 +248,35 @@ export default function HomePage() {
               ))}
             </select>
           </div>
-        </div>
+        </form>
       </div>
 
       {/* 3. Hero Layout Section */}
       <section style={styles.heroSection}>
-        <div style={styles.heroLeftColCentered}>
-          <p style={styles.heroSubtitleLarge}>
-            Deal in high-quality APIs with shorter credit cycles, faster delivery and transparency through data driven analytics on your dashboard.
-          </p>
-          <div style={styles.heroActions}>
-            <button onClick={handleBrowseScroll} className="btn btn-primary" style={styles.browseBtn}>
-              Browse Products
-            </button>
-            <button onClick={handleOrderRedirect} className="btn btn-secondary" style={styles.buyerSupplierBtn}>
-              Be a Buyer or Supplier
-            </button>
+        <div style={styles.heroGrid}>
+          {/* Left Column */}
+          <div style={styles.heroLeftCol}>
+            <h2 style={styles.heroTitle}>
+              Efficient <br />
+              Marketplace for <br />
+              <span style={styles.heroHighlightText}>Pharmaceutical <br />raw Materials</span>
+            </h2>
+            <p style={styles.heroSubtitle}>
+              Deal in high-quality APIs with shorter credit cycles, faster delivery and transparency through data driven analytics on your dashboard.
+            </p>
+            <div style={styles.heroActions}>
+              <button onClick={handleBrowseRedirect} className="btn btn-primary" style={styles.browseBtn}>
+                Browse Products
+              </button>
+              <button onClick={handleOrderRedirect} className="btn btn-secondary" style={styles.buyerSupplierBtn}>
+                Be a Buyer or Supplier
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div style={styles.heroRightCol}>
+            <DnaHelix />
           </div>
         </div>
       </section>
@@ -407,54 +457,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* 6. Chemical Catalog List Section (Search & Filter results) */}
-      <section id="catalog-section" style={styles.catalogSection} className="glass-panel">
-        <div style={styles.catalogHeader}>
-          <h3 style={styles.catalogTitle}>Medicinal & Chemical Catalog</h3>
-          <p style={styles.catalogDesc}>Browse our active stock lists. Log in to place quotations and configure custom weight/volume parameters.</p>
-        </div>
-
-        {loading ? (
-          <div style={styles.loader}>Searching active inventories...</div>
-        ) : products.length === 0 ? (
-          <div style={styles.emptyCatalog}>
-            <p>No chemicals matching "{search}" were found.</p>
-          </div>
-        ) : (
-          <div style={styles.catalogGrid}>
-            {products.map((product) => (
-              <div key={product.id} style={styles.catalogCard} className="glass-panel">
-                <div style={styles.cardHeaderRow}>
-                  <span style={styles.cardSku}>{product.sku}</span>
-                  <span style={styles.cardCat}>{product.category}</span>
-                </div>
-                <h4 style={styles.cardName}>{product.name}</h4>
-                <p style={styles.cardDesc}>{product.description || "API/excipient compound details available on order sheet."}</p>
-                
-                <div style={styles.cardPricingInfo}>
-                  <div style={styles.pricingRow}>
-                    <span style={styles.cardPriceLabel}>Rate / Base Price:</span>
-                    <span style={styles.cardPriceVal}>₹{parseFloat(product.price).toFixed(2)}</span>
-                    <span style={styles.cardPriceUnit}> / {product.priceUnit}</span>
-                  </div>
-                  <div style={styles.pricingRow}>
-                    <span style={styles.cardPriceLabel}>Available Stock:</span>
-                    <span style={styles.cardStockVal}>
-                      {parseFloat(product.stock).toFixed(2)} {product.baseUnit}
-                    </span>
-                  </div>
-                </div>
-
-                <button onClick={handleOrderRedirect} className="btn btn-primary" style={styles.orderBtn}>
-                  <ShoppingCart size={15} />
-                  <span>Request Quote</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* Footer / Contact */}
