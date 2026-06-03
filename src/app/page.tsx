@@ -52,6 +52,7 @@ function LogoIcon() {
 function DnaHelix() {
   const points = [];
   const N = 26;
+  const r = (v: number) => parseFloat(v.toFixed(3));
   
   for (let i = 0; i <= N; i++) {
     const t = i / N;
@@ -65,11 +66,11 @@ function DnaHelix() {
     const offset = 35 * Math.sin(angle);
     
     points.push({
-      x1: cx + nx * offset,
-      y1: cy + ny * offset,
-      x2: cx - nx * offset,
-      y2: cy - ny * offset,
-      opacity: 0.15 + 0.85 * (Math.cos(angle) + 1) / 2,
+      x1: r(cx + nx * offset),
+      y1: r(cy + ny * offset),
+      x2: r(cx - nx * offset),
+      y2: r(cy - ny * offset),
+      opacity: r(0.15 + 0.85 * (Math.cos(angle) + 1) / 2),
     });
   }
 
@@ -87,7 +88,7 @@ function DnaHelix() {
           y2={p.y2}
           stroke="#60a5fa"
           strokeWidth="1.5"
-          opacity={p.opacity * 0.4}
+          opacity={r(p.opacity * 0.4)}
         />
       ))}
       {points.map((p, idx) => (
