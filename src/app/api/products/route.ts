@@ -9,11 +9,6 @@ import { UNIT_CONFIG, areUnitsCompatible } from "@/utils/unitConverter";
 // GET /api/products - List, search, and filter products
 export async function GET(request: Request) {
   try {
-    const cookiesList = await cookies();
-    const session = getSession(cookiesList);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";

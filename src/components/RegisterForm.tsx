@@ -136,7 +136,7 @@ export default function RegisterForm() {
 
         <div style={styles.footer}>
           <span>Already have an account?</span>{" "}
-          <Link href="/" style={styles.link}>
+          <Link href="/login" style={styles.link}>
             Sign In
           </Link>
         </div>
