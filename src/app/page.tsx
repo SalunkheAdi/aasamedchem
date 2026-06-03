@@ -642,20 +642,45 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "60px 24px 80px 24px",
     width: "100%",
   },
-  heroLeftColCentered: {
+  heroGrid: {
+    display: "grid",
+    gridTemplateColumns: "1.2fr 1fr",
+    gap: "50px",
+    alignItems: "center",
+  },
+  heroLeftCol: {
     display: "flex",
     flexDirection: "column",
     gap: "24px",
-    maxWidth: "800px",
-    margin: "0 auto",
-    textAlign: "left",
   },
-  heroSubtitleLarge: {
-    fontSize: "2.1rem",
-    fontWeight: 500,
-    color: "#1e293b",
-    lineHeight: "1.45",
-    letterSpacing: "-0.02em",
+  heroTitle: {
+    fontSize: "3.6rem",
+    fontWeight: 900,
+    lineHeight: "1.1",
+    color: "#0f172a",
+    letterSpacing: "-0.04em",
+    margin: 0,
+  },
+  heroHighlightText: {
+    color: "#2563eb",
+  },
+  heroSubtitle: {
+    fontSize: "1.1rem",
+    color: "#475569",
+    lineHeight: "1.6",
+    maxWidth: "500px",
+    margin: 0,
+  },
+  heroRightCol: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  dnaSvg: {
+    width: "100%",
+    maxWidth: "500px",
+    height: "auto",
   },
   heroActions: {
     display: "flex",
