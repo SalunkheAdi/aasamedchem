@@ -899,7 +899,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardVal: {
     fontSize: "1.8rem",
     fontWeight: 800,
-    color: "#ffffff",
+    color: "#0f172a",
     lineHeight: "1.2",
   },
   cardTitle: {
