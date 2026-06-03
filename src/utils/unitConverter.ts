@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client";
-import Decimal = Prisma.Decimal;
+import { Decimal } from "decimal.js";
 
 export type Dimension = "WEIGHT" | "VOLUME" | "COUNT";
 
